@@ -17,15 +17,12 @@
         70% { opacity: 0; transform: translateY(-50%) scale(1.6); }
         100% { opacity: 0; }
       }
-      /* מצב "לחוץ" קבוע לכפתור ההקלטה בזמן הקלטה */
       .pressed {
         transform: translateY(1px);
         box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
         filter: saturate(1.2);
       }
-      .btn {
-        transition: transform .05s ease, box-shadow .15s ease, filter .2s ease;
-      }
+      .btn { transition: transform .05s ease, box-shadow .15s ease, filter .2s ease; }
     </style>
   </head>
   <body class="min-h-screen bg-slate-100 p-6">
@@ -34,13 +31,17 @@
 
       <section class="bg-white rounded-xl shadow p-4 space-y-3">
         <p class="text-sm text-gray-600">כתוב הודעה כאן או לחץ על 🎙️ להקלטה:</p>
-        <textarea id="txt" rows="5" class="w-full border rounded p-2"></textarea>
+        <textarea id="txt" rows="5" class="w-full border rounded p-2" placeholder="לדוגמה: ביום שלישי ב-10 בזום ברחוב הרצל 12, להזכיר לי 30 דקות לפני"></textarea>
         <div class="flex items-center gap-2">
           <button id="btnParse" class="btn px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
           <button id="btnRecord" class="btn px-4 py-2 rounded bg-red-600 text-white" aria-pressed="false" aria-live="polite">🎙️ הקלט</button>
           <span id="recIndicator" class="hidden text-red-600 font-medium">
             <span class="pulse mr-4"></span> מקליט עכשיו… דברו ואשרו לסיום
           </span>
+        </div>
+        <div id="interimBox" class="hidden mt-3 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+          <div class="font-medium mb-1">תמלול בזמן אמת:</div>
+          <div id="interimText" class="whitespace-pre-wrap"></div>
         </div>
         <p id="srSupport" class="text-xs text-amber-700 mt-1"></p>
       </section>

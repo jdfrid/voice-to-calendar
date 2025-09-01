@@ -56,6 +56,8 @@ document.getElementById("btnParse").onclick=()=>{
 
 // ----- Recording (SpeechRecognition) -----
 const srInfo = document.getElementById('srSupport');
+const interimBox = document.getElementById('interimBox');
+const interimText = document.getElementById('interimText');
 window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition;
 let recording = false;
@@ -65,19 +67,21 @@ const recIndicator = document.getElementById('recIndicator');
 
 (function initSR(){
   if (!window.SpeechRecognition) {
-    srInfo.textContent = "הדפדפן לא תומך בזיהוי דיבור. מומלץ Chrome בגרסה עדכנית ובחיבור HTTPS.";
+    srInfo.textContent = "הדפדפן לא תומך בזיהוי דיבור. מומלץ Chrome עדכני ובחיבור HTTPS.";
     btnRecord.disabled = true;
     btnRecord.classList.add('opacity-60','cursor-not-allowed');
     return;
   }
   recognition = new SpeechRecognition();
   recognition.lang = "he-IL";
-  recognition.interimResults = false;
+  recognition.interimResults = true;  // תמלול בזמן אמת
   recognition.maxAlternatives = 1;
 
   recognition.onstart = () => {
     recording = true;
     recIndicator.classList.remove('hidden');
+    interimBox.classList.remove('hidden');
+    interimText.textContent = "";
     btnRecord.textContent = "⏹️ עצור";
     btnRecord.setAttribute('aria-pressed','true');
     btnRecord.classList.add('pressed');
@@ -97,11 +101,22 @@ const recIndicator = document.getElementById('recIndicator');
     btnRecord.classList.add('bg-red-600');
     btnParse.disabled = false;
     btnParse.classList.remove('opacity-60','cursor-not-allowed');
+    // לא מסתירים את interimBox כדי שהטקסט האחרון יישאר – אפשר להסתיר אם רוצים
   };
 
   recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
-    document.getElementById("txt").value = text;
+    let live = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const res = event.results[i];
+      live += res[0].transcript + " ";
+      if (res.isFinal) {
+        // כשהמנוע מסמן תוצאה סופית – נכניס לטקסט הראשי
+        const current = document.getElementById("txt").value.trim();
+        const combined = (current + " " + res[0].transcript).trim();
+        document.getElementById("txt").value = combined;
+      }
+    }
+    interimText.textContent = live.trim();
   };
 
   recognition.onerror = (event) => {
@@ -111,7 +126,6 @@ const recIndicator = document.getElementById('recIndicator');
 
 btnRecord.onclick = () => {
   if (!recognition) return;
-  // למנוע כפילויות start/stop
   try {
     if (!recording) { recognition.start(); }
     else { recognition.stop(); }
