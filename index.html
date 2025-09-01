@@ -3,8 +3,10 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Voice → Calendar (Static)</title>
+    <title>Voice → Calendar (Static + Google Calendar)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Identity Services (OAuth 2.0) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
       .pulse { position: relative; display: inline-block; }
       .pulse::before {
@@ -17,21 +19,25 @@
         70% { opacity: 0; transform: translateY(-50%) scale(1.6); }
         100% { opacity: 0; }
       }
-      .pressed {
-        transform: translateY(1px);
-        box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
-        filter: saturate(1.2);
-      }
+      .pressed { transform: translateY(1px); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25); filter: saturate(1.2); }
       .btn { transition: transform .05s ease, box-shadow .15s ease, filter .2s ease; }
+      .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      dialog::backdrop { background: rgba(0,0,0,.35); }
     </style>
   </head>
   <body class="min-h-screen bg-slate-100 p-6">
-    <div class="max-w-3xl mx-auto space-y-6">
-      <h1 class="text-2xl font-bold">Voice → Calendar (גרסה סטטית)</h1>
+    <div class="max-w-4xl mx-auto space-y-6">
+      <header class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Voice → Calendar (גרסה סטטית + חיבור Google Calendar)</h1>
+        <div class="flex items-center gap-2">
+          <button id="btnSettings" class="btn px-3 py-2 rounded bg-slate-700 text-white">⚙️ הגדרות גוגל</button>
+          <button id="btnGLogin" class="btn px-3 py-2 rounded bg-emerald-600 text-white">🔑 התחבר לגוגל</button>
+        </div>
+      </header>
 
       <section class="bg-white rounded-xl shadow p-4 space-y-3">
         <p class="text-sm text-gray-600">כתוב הודעה כאן או לחץ על 🎙️ להקלטה:</p>
-        <textarea id="txt" rows="5" class="w-full border rounded p-2" placeholder="לדוגמה: ביום שלישי ב-10 בזום ברחוב הרצל 12, להזכיר לי 30 דקות לפני"></textarea>
+        <textarea id="txt" rows="5" class="w-full border rounded p-2" placeholder="לדוגמה: ביום שלישי ב-10 בזום בהרצל 12, להזכיר לי 30 דקות לפני, כל שבוע"></textarea>
         <div class="flex items-center gap-2">
           <button id="btnParse" class="btn px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
           <button id="btnRecord" class="btn px-4 py-2 rounded bg-red-600 text-white" aria-pressed="false" aria-live="polite">🎙️ הקלט</button>
@@ -48,13 +54,54 @@
 
       <section id="parsed" class="hidden bg-white rounded-xl shadow p-4 space-y-3">
         <h2 class="text-lg font-semibold">פרטים שזוהו</h2>
-        <div><b>תוכן:</b> <span id="outContent"></span></div>
-        <div><b>תאריך:</b> <span id="outDate"></span></div>
-        <div><b>שעה:</b> <span id="outTime"></span></div>
-        <div><b>מקום:</b> <span id="outLocation"></span></div>
-        <button id="btnDownload" class="btn px-4 py-2 rounded bg-green-600 text-white">הורד ICS</button>
+        <div class="grid gap-2">
+          <div><b>תוכן:</b> <span id="outContent"></span></div>
+          <div><b>תאריך:</b> <span id="outDate"></span></div>
+          <div><b>שעה:</b> <span id="outTime"></span></div>
+          <div><b>מקום:</b> <span id="outLocation"></span></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 pt-2">
+          <button id="btnDownload" class="btn px-4 py-2 rounded bg-green-600 text-white">⬇️ הורד ICS</button>
+          <a id="btnGTemplate" class="btn px-4 py-2 rounded bg-blue-50 text-blue-900 border border-blue-200" target="_blank" rel="noreferrer">🔗 פתח תבנית בגוגל</a>
+          <button id="btnGInsert" class="btn px-4 py-2 rounded bg-emerald-600 text-white">📤 הוסף ליומן (אוטומטי)</button>
+          <span id="gStatus" class="text-sm text-gray-600"></span>
+        </div>
       </section>
+
+      <footer class="text-xs text-gray-600 pt-6">
+        * האפליקציה פועלת מהדפדפן בלבד. לחיבור אוטומטי ליומן דרוש <span class="kbd">OAuth Client ID</span> של Google והפעלת Calendar API. אין שרת.
+      </footer>
     </div>
+
+    <!-- Settings dialog -->
+    <dialog id="dlgSettings" class="rounded-2xl p-0 w-[96%] max-w-xl">
+      <form method="dialog" class="p-5 space-y-4">
+        <h3 class="text-lg font-semibold">הגדרות Google</h3>
+        <div class="grid gap-2">
+          <label class="text-sm text-gray-700">OAuth Client ID</label>
+          <input id="fldClientId" class="border rounded px-3 py-2" placeholder="לדוגמה: 12345-abc.apps.googleusercontent.com"/>
+        </div>
+        <div class="grid md:grid-cols-2 gap-2">
+          <div>
+            <label class="text-sm text-gray-700">Calendar ID</label>
+            <input id="fldCalendarId" class="border rounded px-3 py-2 w-full" placeholder="primary" value="primary"/>
+          </div>
+          <div>
+            <label class="text-sm text-gray-700">אזור זמן</label>
+            <input id="fldTz" class="border rounded px-3 py-2 w-full" placeholder="Asia/Jerusalem" value="Asia/Jerusalem"/>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500">
+          יש להגדיר את <span class="kbd">Authorized JavaScript origins</span> ל־
+          <span class="kbd">https://&lt;username&gt;.github.io</span> ואת הדומיין כמאושר. הפעל Calendar API ב־Google Cloud Console.
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button value="cancel" class="px-4 py-2 rounded border">בטל</button>
+          <button id="btnSaveSettings" value="default" class="px-4 py-2 rounded bg-slate-800 text-white">שמור</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="./app.js"></script>
   </body>
 </html>
