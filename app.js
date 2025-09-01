@@ -10,12 +10,10 @@ function parseText(t){
     const d = new Date(now); d.setDate(d.getDate()+1);
     date = d.toLocaleDateString('he-IL');
   }
-  if(/(\d{1,2}):(\d{2})/.test(t)){
-    time = t.match(/(\d{1,2}):(\d{2})/)[0];
-  }
-  if(/ב[א-ת]+/.test(t)){
-    location = t.match(/ב[א-ת]+/)[0];
-  }
+  const timeMatch = t.match(/(\d{1,2}):(\d{2})/);
+  if(timeMatch){ time = timeMatch[0]; }
+  const locMatch = t.match(/\bב[א-ת][^ ,.\n]{0,40}/);
+  if(locMatch){ location = locMatch[0]; }
   content = content.replace(/מחר|בשעה.*|ב[א-ת]+/g,"").trim();
   return {content,date,time,location};
 }
@@ -57,15 +55,21 @@ document.getElementById("btnParse").onclick=()=>{
 };
 
 // ----- Recording (SpeechRecognition) -----
+const srInfo = document.getElementById('srSupport');
 window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition;
 let recording = false;
-
 const btnRecord = document.getElementById('btnRecord');
 const btnParse = document.getElementById('btnParse');
 const recIndicator = document.getElementById('recIndicator');
 
-if (window.SpeechRecognition) {
+(function initSR(){
+  if (!window.SpeechRecognition) {
+    srInfo.textContent = "הדפדפן לא תומך בזיהוי דיבור. מומלץ Chrome בגרסה עדכנית ובחיבור HTTPS.";
+    btnRecord.disabled = true;
+    btnRecord.classList.add('opacity-60','cursor-not-allowed');
+    return;
+  }
   recognition = new SpeechRecognition();
   recognition.lang = "he-IL";
   recognition.interimResults = false;
@@ -75,6 +79,8 @@ if (window.SpeechRecognition) {
     recording = true;
     recIndicator.classList.remove('hidden');
     btnRecord.textContent = "⏹️ עצור";
+    btnRecord.setAttribute('aria-pressed','true');
+    btnRecord.classList.add('pressed');
     btnRecord.classList.remove('bg-red-600');
     btnRecord.classList.add('bg-gray-700');
     btnParse.disabled = true;
@@ -85,6 +91,8 @@ if (window.SpeechRecognition) {
     recording = false;
     recIndicator.classList.add('hidden');
     btnRecord.textContent = "🎙️ הקלט";
+    btnRecord.setAttribute('aria-pressed','false');
+    btnRecord.classList.remove('pressed');
     btnRecord.classList.remove('bg-gray-700');
     btnRecord.classList.add('bg-red-600');
     btnParse.disabled = false;
@@ -99,17 +107,13 @@ if (window.SpeechRecognition) {
   recognition.onerror = (event) => {
     alert("שגיאה בהקלטה: " + event.error);
   };
-}
+})();
 
 btnRecord.onclick = () => {
-  if (!recognition) {
-    alert("הדפדפן לא תומך בזיהוי דיבור");
-    return;
-  }
+  if (!recognition) return;
+  // למנוע כפילויות start/stop
   try {
-    if (!recording) recognition.start();
-    else recognition.stop();
-  } catch(e) {
-    // מניעת חריגות start/stop כפולות
-  }
+    if (!recording) { recognition.start(); }
+    else { recognition.stop(); }
+  } catch (e) {}
 };

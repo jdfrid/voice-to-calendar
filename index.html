@@ -6,26 +6,25 @@
     <title>Voice → Calendar (Static)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      .pulse {
-        position: relative;
-        display: inline-block;
-      }
+      .pulse { position: relative; display: inline-block; }
       .pulse::before {
-        content: "";
-        position: absolute;
-        right: -10px;
-        top: 50%;
-        width: 8px;
-        height: 8px;
-        background: currentColor;
-        border-radius: 9999px;
-        transform: translateY(-50%);
-        animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        content: ""; position: absolute; right: -10px; top: 50%;
+        width: 8px; height: 8px; background: currentColor; border-radius: 9999px;
+        transform: translateY(-50%); animation: ping 1s cubic-bezier(0,0,0.2,1) infinite;
       }
       @keyframes ping {
         0% { opacity: 1; transform: translateY(-50%) scale(0.9); }
         70% { opacity: 0; transform: translateY(-50%) scale(1.6); }
         100% { opacity: 0; }
+      }
+      /* מצב "לחוץ" קבוע לכפתור ההקלטה בזמן הקלטה */
+      .pressed {
+        transform: translateY(1px);
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+        filter: saturate(1.2);
+      }
+      .btn {
+        transition: transform .05s ease, box-shadow .15s ease, filter .2s ease;
       }
     </style>
   </head>
@@ -37,12 +36,13 @@
         <p class="text-sm text-gray-600">כתוב הודעה כאן או לחץ על 🎙️ להקלטה:</p>
         <textarea id="txt" rows="5" class="w-full border rounded p-2"></textarea>
         <div class="flex items-center gap-2">
-          <button id="btnParse" class="px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
-          <button id="btnRecord" class="px-4 py-2 rounded bg-red-600 text-white">🎙️ הקלט</button>
+          <button id="btnParse" class="btn px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
+          <button id="btnRecord" class="btn px-4 py-2 rounded bg-red-600 text-white" aria-pressed="false" aria-live="polite">🎙️ הקלט</button>
           <span id="recIndicator" class="hidden text-red-600 font-medium">
             <span class="pulse mr-4"></span> מקליט עכשיו… דברו ואשרו לסיום
           </span>
         </div>
+        <p id="srSupport" class="text-xs text-amber-700 mt-1"></p>
       </section>
 
       <section id="parsed" class="hidden bg-white rounded-xl shadow p-4 space-y-3">
@@ -51,7 +51,7 @@
         <div><b>תאריך:</b> <span id="outDate"></span></div>
         <div><b>שעה:</b> <span id="outTime"></span></div>
         <div><b>מקום:</b> <span id="outLocation"></span></div>
-        <button id="btnDownload" class="px-4 py-2 rounded bg-green-600 text-white">הורד ICS</button>
+        <button id="btnDownload" class="btn px-4 py-2 rounded bg-green-600 text-white">הורד ICS</button>
       </section>
     </div>
     <script src="./app.js"></script>
