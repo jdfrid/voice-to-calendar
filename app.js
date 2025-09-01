@@ -1,3 +1,4 @@
+// ----- Parse helpers -----
 function parseText(t){
   const now = new Date();
   let content = t;
@@ -37,6 +38,7 @@ END:VEVENT
 END:VCALENDAR`;
 }
 
+// ----- Parse button -----
 document.getElementById("btnParse").onclick=()=>{
   const txt=document.getElementById("txt").value;
   const ev=parseText(txt);
@@ -52,4 +54,62 @@ document.getElementById("btnParse").onclick=()=>{
     a.href=url; a.download="event.ics"; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
+};
+
+// ----- Recording (SpeechRecognition) -----
+window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
+let recording = false;
+
+const btnRecord = document.getElementById('btnRecord');
+const btnParse = document.getElementById('btnParse');
+const recIndicator = document.getElementById('recIndicator');
+
+if (window.SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "he-IL";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    recording = true;
+    recIndicator.classList.remove('hidden');
+    btnRecord.textContent = "⏹️ עצור";
+    btnRecord.classList.remove('bg-red-600');
+    btnRecord.classList.add('bg-gray-700');
+    btnParse.disabled = true;
+    btnParse.classList.add('opacity-60','cursor-not-allowed');
+  };
+
+  recognition.onend = () => {
+    recording = false;
+    recIndicator.classList.add('hidden');
+    btnRecord.textContent = "🎙️ הקלט";
+    btnRecord.classList.remove('bg-gray-700');
+    btnRecord.classList.add('bg-red-600');
+    btnParse.disabled = false;
+    btnParse.classList.remove('opacity-60','cursor-not-allowed');
+  };
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    document.getElementById("txt").value = text;
+  };
+
+  recognition.onerror = (event) => {
+    alert("שגיאה בהקלטה: " + event.error);
+  };
+}
+
+btnRecord.onclick = () => {
+  if (!recognition) {
+    alert("הדפדפן לא תומך בזיהוי דיבור");
+    return;
+  }
+  try {
+    if (!recording) recognition.start();
+    else recognition.stop();
+  } catch(e) {
+    // מניעת חריגות start/stop כפולות
+  }
 };

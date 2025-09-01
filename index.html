@@ -5,15 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Voice → Calendar (Static)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .pulse {
+        position: relative;
+        display: inline-block;
+      }
+      .pulse::before {
+        content: "";
+        position: absolute;
+        right: -10px;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        background: currentColor;
+        border-radius: 9999px;
+        transform: translateY(-50%);
+        animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+      }
+      @keyframes ping {
+        0% { opacity: 1; transform: translateY(-50%) scale(0.9); }
+        70% { opacity: 0; transform: translateY(-50%) scale(1.6); }
+        100% { opacity: 0; }
+      }
+    </style>
   </head>
   <body class="min-h-screen bg-slate-100 p-6">
     <div class="max-w-3xl mx-auto space-y-6">
       <h1 class="text-2xl font-bold">Voice → Calendar (גרסה סטטית)</h1>
 
       <section class="bg-white rounded-xl shadow p-4 space-y-3">
-        <p class="text-sm text-gray-600">כתוב הודעה כאן (או דבר עם זיהוי דיבור אם הדפדפן תומך):</p>
+        <p class="text-sm text-gray-600">כתוב הודעה כאן או לחץ על 🎙️ להקלטה:</p>
         <textarea id="txt" rows="5" class="w-full border rounded p-2"></textarea>
-        <button id="btnParse" class="px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
+        <div class="flex items-center gap-2">
+          <button id="btnParse" class="px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
+          <button id="btnRecord" class="px-4 py-2 rounded bg-red-600 text-white">🎙️ הקלט</button>
+          <span id="recIndicator" class="hidden text-red-600 font-medium">
+            <span class="pulse mr-4"></span> מקליט עכשיו… דברו ואשרו לסיום
+          </span>
+        </div>
       </section>
 
       <section id="parsed" class="hidden bg-white rounded-xl shadow p-4 space-y-3">
