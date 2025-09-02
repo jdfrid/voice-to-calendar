@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Voice → Calendar (Service Account)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 p-6">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <header class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Voice → Calendar (חיבור דרך Service Account)</h1>
+        <button id="btnSettings" class="px-3 py-2 rounded bg-slate-700 text-white">⚙️ הגדרות</button>
+      </header>
+      <section class="bg-white rounded-xl shadow p-4 space-y-3">
+        <textarea id="txt" rows="5" class="w-full border rounded p-2" placeholder="למשל: ביום שלישי ב-10 בהרצל 12, להזכיר לי 30 דקות לפני, כל שבוע"></textarea>
+        <div class="flex items-center gap-2">
+          <button id="btnParse" class="px-4 py-2 rounded bg-blue-600 text-white">נתח הודעה</button>
+          <button id="btnRecord" class="px-4 py-2 rounded bg-red-600 text-white" aria-pressed="false" aria-live="polite">🎙️ הקלט</button>
+          <span id="recIndicator" class="hidden text-red-600 font-medium">מקליט עכשיו…</span>
+        </div>
+        <div id="interimBox" class="hidden mt-3 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+          <div class="font-medium mb-1">תמלול בזמן אמת:</div>
+          <div id="interimText" class="whitespace-pre-wrap"></div>
+        </div>
+      </section>
+      <section id="parsed" class="hidden bg-white rounded-xl shadow p-4 space-y-3">
+        <h2 class="text-lg font-semibold">פרטים שזוהו</h2>
+        <div class="grid gap-2">
+          <div><b>תוכן:</b> <span id="outContent"></span></div>
+          <div><b>תאריך:</b> <span id="outDate"></span></div>
+          <div><b>שעה:</b> <span id="outTime"></span></div>
+          <div><b>מקום:</b> <span id="outLocation"></span></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 pt-2">
+          <button id="btnDownload" class="px-4 py-2 rounded bg-green-600 text-white">⬇️ הורד ICS</button>
+          <button id="btnBackendInsert" class="px-4 py-2 rounded bg-emerald-600 text-white">📤 הוסף ליומן דרך השרת</button>
+          <span id="srvStatus" class="text-sm text-gray-600"></span>
+        </div>
+      </section>
+      <dialog id="dlgSettings" class="rounded-2xl p-0 w-[96%] max-w-xl">
+        <form method="dialog" class="p-5 space-y-4">
+          <h3 class="text-lg font-semibold">הגדרות</h3>
+          <div class="grid gap-2">
+            <label class="text-sm text-gray-700">שרת Backend (למשל: http://localhost:8787 או https://your-app.vercel.app/api)</label>
+            <input id="fldBackend" class="border rounded px-3 py-2" placeholder="http://localhost:8787"/>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-sm text-gray-700">Calendar ID</label>
+              <input id="fldCalendarId" class="border rounded px-3 py-2 w-full" value="primary"/>
+            </div>
+            <div>
+              <label class="text-sm text-gray-700">אזור זמן</label>
+              <input id="fldTz" class="border rounded px-3 py-2 w-full" value="Asia/Jerusalem"/>
+            </div>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button value="cancel" class="px-4 py-2 rounded border">בטל</button>
+            <button id="btnSaveSettings" value="default" class="px-4 py-2 rounded bg-slate-800 text-white">שמור</button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
