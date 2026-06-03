@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice Router</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer data-google-identity></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Voice Router</p>
+            <h1>דיבור אחד, הזנה נכונה</h1>
+          </div>
+          <div class="connection">
+            <span id="connectionDot" class="dot"></span>
+            <span id="connectionText">לא מחובר לגוגל</span>
+          </div>
+        </header>
+
+        <section class="composer" aria-label="קליטת הודעה">
+          <div class="visualizer" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <label for="messageInput">מה תרצה להזין?</label>
+          <textarea
+            id="messageInput"
+            placeholder="לדוגמה: יש לי מחר פגישה אצל רופא השיניים בשעה 1200 ברחוב הרצל 42 תל אביב"
+          ></textarea>
+          <div class="actions">
+            <button id="listenButton" class="icon-button" type="button" title="התחל הקלטה" aria-label="התחל הקלטה">
+              <span class="icon">◉</span>
+            </button>
+            <button id="analyzeButton" class="primary" type="button">נתח הודעה</button>
+            <button id="clearButton" type="button">נקה</button>
+          </div>
+          <p id="speechStatus" class="status-line">אפשר לדבר בעברית או להקליד ידנית.</p>
+        </section>
+
+        <section class="result-grid" aria-label="תוצאת ניתוח">
+          <article class="panel">
+            <div class="panel-heading">
+              <h2>זיהוי</h2>
+              <span id="intentPill" class="pill">ממתין</span>
+            </div>
+            <dl id="detailsList" class="details-list"></dl>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <h2>פעולה</h2>
+              <span id="confidencePill" class="pill muted">0%</span>
+            </div>
+            <div id="actionArea" class="action-area">
+              <p>לאחר הניתוח יופיע כאן היעד המתאים: יומן Google לפגישות או Google Tasks להודעות כלליות.</p>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <aside class="side-panel" aria-label="הגדרות וחיבורים">
+        <section>
+          <h2>חיבור Google</h2>
+          <p>
+            קישור מהיר ליומן עובד גם בלי התחברות. כתיבה ישירה ליומן או למשימות דורשת Client ID של Google Cloud.
+          </p>
+          <label for="clientIdInput">Google OAuth Client ID</label>
+          <input id="clientIdInput" autocomplete="off" placeholder="xxxxxxxx.apps.googleusercontent.com" />
+          <label for="originInput">Authorized JavaScript origin נדרש</label>
+          <div class="origin-row">
+            <input id="originInput" readonly />
+            <button id="copyOriginButton" type="button">העתק</button>
+          </div>
+          <div class="side-actions">
+            <button id="saveConfigButton" type="button">שמור</button>
+            <button id="connectButton" class="google-button" type="button">התחבר עם Google</button>
+          </div>
+          <p id="oauthStatus" class="oauth-status">הדבק Client ID כדי להפעיל את חלון ההרשאה.</p>
+        </section>
+
+        <section>
+          <h2>כללי ניתוב</h2>
+          <ul class="rules">
+            <li><strong>פגישה:</strong> מילים כמו פגישה, תור, רופא, מחר, שעה, כתובת.</li>
+            <li><strong>משימה:</strong> הודעה בלי זמן ברור או מקום תישמר כמשימת Google.</li>
+            <li><strong>בדיקה:</strong> תמיד מוצגת תצוגת אישור לפני שליחה.</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
