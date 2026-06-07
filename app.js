@@ -261,6 +261,7 @@ function preloadGoogleIdentity() {
   if (existing) {
     existing.addEventListener("load", markGoogleReady, { once: true });
     existing.addEventListener("error", markGoogleLoadError, { once: true });
+    waitForGoogleIdentity();
     return;
   }
 
@@ -272,12 +273,27 @@ function preloadGoogleIdentity() {
   script.onload = markGoogleReady;
   script.onerror = markGoogleLoadError;
   document.head.appendChild(script);
+  waitForGoogleIdentity();
 }
 
 function markGoogleReady() {
   state.googleReady = true;
   els.connect.disabled = false;
   updateOAuthHint();
+}
+
+function waitForGoogleIdentity(attempt = 0) {
+  if (window.google?.accounts?.oauth2) {
+    markGoogleReady();
+    return;
+  }
+
+  if (attempt >= 30) {
+    markGoogleLoadError();
+    return;
+  }
+
+  window.setTimeout(() => waitForGoogleIdentity(attempt + 1), 250);
 }
 
 function markGoogleLoadError() {
