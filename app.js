@@ -7,6 +7,7 @@ const state = {
   token: "",
   tokenClient: null,
   latest: null,
+  lastAnalyzedText: "",
   recognition: null,
   isListening: false,
   googleReady: false
@@ -22,6 +23,7 @@ const els = {
   intent: document.querySelector("#intentPill"),
   confidence: document.querySelector("#confidencePill"),
   details: document.querySelector("#detailsList"),
+  results: document.querySelector(".result-grid"),
   action: document.querySelector("#actionArea"),
   clientId: document.querySelector("#clientIdInput"),
   origin: document.querySelector("#originInput"),
@@ -47,7 +49,7 @@ function init() {
 
 function bindEvents() {
   els.listen.addEventListener("click", toggleListening);
-  els.analyze.addEventListener("click", () => analyzeAndRender(els.input.value));
+  els.analyze.addEventListener("click", () => analyzeAndRender(els.input.value, { scroll: true }));
   els.clear.addEventListener("click", clearAll);
   els.saveConfig.addEventListener("click", saveConfig);
   els.connect.addEventListener("click", connectGoogle);
@@ -69,7 +71,10 @@ function setupSpeech() {
   state.recognition.continuous = false;
 
   state.recognition.onstart = () => setListening(true);
-  state.recognition.onend = () => setListening(false);
+  state.recognition.onend = () => {
+    setListening(false);
+    analyzeCurrentInput();
+  };
   state.recognition.onerror = event => {
     els.status.textContent = `שגיאת זיהוי דיבור: ${event.error}`;
     setListening(false);
@@ -81,7 +86,7 @@ function setupSpeech() {
       .trim();
     els.input.value = transcript;
     if (event.results[event.results.length - 1].isFinal) {
-      analyzeAndRender(transcript);
+      analyzeAndRender(transcript, { scroll: true });
     }
   };
 }
@@ -102,15 +107,26 @@ function setListening(isListening) {
   els.status.textContent = isListening ? "מקשיב..." : "אפשר לדבר בעברית או להקליד ידנית.";
 }
 
-function analyzeAndRender(rawText) {
+function analyzeCurrentInput() {
+  const text = els.input.value.trim();
+  if (text && text !== state.lastAnalyzedText) {
+    analyzeAndRender(text, { scroll: true });
+  }
+}
+
+function analyzeAndRender(rawText, options = {}) {
   const item = VoiceParser.parseMessage(rawText);
   if (!item) {
     renderEmpty();
     return;
   }
 
+  state.lastAnalyzedText = rawText.trim();
   state.latest = item;
   renderAnalysis(state.latest);
+  if (options.scroll) {
+    els.results.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function renderAnalysis(item) {
@@ -172,6 +188,7 @@ function renderEmpty() {
 function clearAll() {
   els.input.value = "";
   state.latest = null;
+  state.lastAnalyzedText = "";
   renderEmpty();
 }
 
