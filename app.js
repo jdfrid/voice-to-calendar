@@ -103,117 +103,14 @@ function setListening(isListening) {
 }
 
 function analyzeAndRender(rawText) {
-  const text = normalize(rawText);
-  if (!text) {
+  const item = VoiceParser.parseMessage(rawText);
+  if (!item) {
     renderEmpty();
     return;
   }
 
-  state.latest = parseMessage(text);
+  state.latest = item;
   renderAnalysis(state.latest);
-}
-
-function parseMessage(text) {
-  const title = extractTitle(text);
-  const date = extractDate(text);
-  const time = extractTime(text);
-  const address = extractAddress(text);
-  const isAppointment = detectAppointment(text, date, time, address);
-  const confidence = calculateConfidence({ text, isAppointment, date, time, address });
-
-  if (isAppointment) {
-    const start = buildStartDate(date, time);
-    const end = new Date(start.getTime() + 60 * 60 * 1000);
-    return {
-      type: "calendar",
-      label: "פגישה ביומן",
-      confidence,
-      title,
-      start,
-      end,
-      address,
-      notes: text
-    };
-  }
-
-  return {
-    type: "task",
-    label: "משימה",
-    confidence,
-    title: title || text,
-    notes: text,
-    due: date ? buildStartDate(date, time) : null
-  };
-}
-
-function detectAppointment(text, date, time, address) {
-  const appointmentWords = ["פגישה", "תור", "רופא", "רופאת", "שיננית", "בדיקה", "טיפול"];
-  const taskWords = ["תזכיר", "לקנות", "לעשות", "משימה", "להתקשר", "לשלוח"];
-  const score =
-    countMatches(text, appointmentWords) * 2 +
-    (date ? 1 : 0) +
-    (time ? 2 : 0) +
-    (address ? 1 : 0) -
-    countMatches(text, taskWords);
-  return score >= 3;
-}
-
-function calculateConfidence({ text, isAppointment, date, time, address }) {
-  let score = isAppointment ? 54 : 62;
-  if (date) score += 14;
-  if (time) score += 16;
-  if (address) score += 10;
-  if (text.length > 18) score += 6;
-  return Math.min(score, 96);
-}
-
-function extractDate(text) {
-  const today = new Date();
-  if (/\bמחר\b/.test(text)) return addDays(today, 1);
-  if (/\bהיום\b/.test(text)) return today;
-  if (/מחרתיים/.test(text)) return addDays(today, 2);
-
-  const match = text.match(/(\d{1,2})[./-](\d{1,2})(?:[./-](\d{2,4}))?/);
-  if (!match) return null;
-
-  const day = Number(match[1]);
-  const month = Number(match[2]) - 1;
-  const year = match[3] ? normalizeYear(Number(match[3])) : today.getFullYear();
-  return new Date(year, month, day);
-}
-
-function extractTime(text) {
-  const match = text.match(/(?:בשעה|שעה|ב-)?\s*(\d{1,2})(?::?(\d{2}))\b/);
-  if (!match) return null;
-  let hours = Number(match[1]);
-  const minutes = Number(match[2] || 0);
-
-  if (hours > 23 && String(match[1]).length === 4) {
-    const value = String(match[1]);
-    hours = Number(value.slice(0, 2));
-    return { hours, minutes: Number(value.slice(2)) };
-  }
-
-  return { hours, minutes };
-}
-
-function extractAddress(text) {
-  const match = text.match(/(?:ברחוב|ברח'|רחוב|רח')\s+(.+?)(?:\s+(?:בשעה|מחר|היום|בתאריך)|$)/);
-  return match ? cleanText(match[1]) : "";
-}
-
-function extractTitle(text) {
-  if (/רופא(?:ת)?\s*השיניים|שיננית|שיניים/.test(text)) return "תור לרופא שיניים";
-  if (/רופא|רופאה/.test(text)) return "תור לרופא";
-  if (/פגישה/.test(text)) return "פגישה";
-  if (/תור/.test(text)) return "תור";
-  return cleanText(text).slice(0, 70);
-}
-
-function buildStartDate(date, time) {
-  const base = date ? new Date(date) : new Date();
-  base.setHours(time?.hours ?? 9, time?.minutes ?? 0, 0, 0);
-  return base;
 }
 
 function renderAnalysis(item) {
@@ -492,28 +389,6 @@ function buildCalendarUrl(item) {
 
 function toCalendarStamp(date) {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-}
-
-function addDays(date, days) {
-  const copy = new Date(date);
-  copy.setDate(copy.getDate() + days);
-  return copy;
-}
-
-function normalizeYear(year) {
-  return year < 100 ? 2000 + year : year;
-}
-
-function normalize(value) {
-  return cleanText(value || "");
-}
-
-function cleanText(value) {
-  return value.replace(/\s+/g, " ").trim();
-}
-
-function countMatches(text, words) {
-  return words.reduce((count, word) => count + (text.includes(word) ? 1 : 0), 0);
 }
 
 function formatDateTime(date) {

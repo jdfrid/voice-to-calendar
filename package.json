@@ -1,0 +1,13 @@
+{
+  "name": "voice-router",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hebrew voice/text router for Google Calendar events and Google Tasks.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
